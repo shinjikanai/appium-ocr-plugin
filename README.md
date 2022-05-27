@@ -14,6 +14,8 @@
 Appium 2.0 のインストール方法： `npm install -g appium@next`
 https://www.headspin.io/blog/installing-appium-2-0-and-the-driver-and-plugins-cli
 
+* Node v16.1 推奨（Node v18を使用すると、Teserractがランタイムエラーで異常終了します）
+
 ## インストレーション - サーバー側
 
 CLIから本プラグインをAppiumへインストールする:
