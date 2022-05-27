@@ -1,28 +1,28 @@
-# Appium OCR Plugin
+# Appium OCR プラグイン
 
-This is a [Tesseract](https://github.com/tesseract-ocr/tesseract)-based OCR plugin for Appium. It relies on [Tesseract.js](https://tesseract.projectnaptha.com/) for the OCR processing.
+これは[Tesseract](https://github.com/tesseract-ocr/tesseract)ベースのAppium用OCRプラグインです。[Tesseract.js](https://tesseract.projectnaptha.com/) のOCR処理に依存します.
 
-## Features
+## 機能
 
 1. **New OCR endpoint** - call a new Appium server endpoint to perform OCR on the current screenshot, and return matching text and metadata.
 2. **OCR context** - switch to the `OCR` context and the page source will be updated to respond with XML corresponding to text objects found on the screen.
 3. **Find elements by OCR text** - When in the OCR context, using XPath will find "elements" based on the OCR XML version of the page source. These found elements can then be interacted with in minimal ways (click, getText) based purely on screen position.
 
-## Prerequisites
+## 事前準備
 
 * Appium Server 2.0+
 
-## Installation - Server
+## インストレーション - サーバー側
 
-Install the plugin using Appium's plugin CLI:
+CLIから本プラグインをAppiumへインストールする:
 
 ```
 appium plugin install --source=npm appium-ocr-plugin
 ```
 
-## Installation - Client
+## インストレーション - クライアント側
 
-The only feature which requires an update on the client is the new `getOcrText` server endpoint. There are currently not any official client plugins for this feature. Some may be developed in the future. But reference, here is how to add the command to WebdriverIO:
+クライアント側へ手動で追加しなければいけないメソッドは、getOcrText用のエンドポイントのみです。この機能に対する公式のクライアントプラグインは今のところありません。将来的には開発されるかもしれません。しかし、参考までに、WebdriverIOにコマンドを追加する方法は以下のとおりです。
 
 ```js
 browser.addCommand('getOcrText', command('POST', '/session/:sessionId/appium/ocr', {
@@ -34,44 +34,55 @@ browser.addCommand('getOcrText', command('POST', '/session/:sessionId/appium/ocr
 }))
 ```
 
-## Activation
+```python
+class CustomURLCommand(ExtensionBase):
+    def method_name(self):
+        return 'get_ocr_text'
 
-The plugin will not be active unless turned on when invoking the Appium server:
+    def get_ocr_text(self, argument):
+        return self.execute(argument)['value']
+
+    def add_command(self):
+        return ('post', '/session/$sessionId/appium/ocr')
+```
+
+## 有効化
+
+プラグインは、Appiumサーバーの起動時にONにしないとアクティブになりません。
 
 ```
 appium --use-plugins=images
 ```
 
-## Usage
+## 使用方法
 
-### Response value terminology
+### 応答値に関する用語
 
-Here is the meaning for the various response values you might find while using this plugin:
+このプラグインがリターンする応答値の意味は以下のとおりです。
 
-* `confidence` - Tesseract's confidence level (on a scale of 0 to 100) for the result of the OCR process for a given piece of text
-* `bbox` - "bounding box", an object containing values labeled `x0`, `x1`, `y0`, and `y1`. Here, `x0` means the left-hand x-coordinate of the box defining the discovered text, `x1` means the right-hand x-coordinate, `y0` means the upper y-coordinate, and `y1` the lower y-coordinate.
+* `confidence` - 該当するテキストに対するOCR処理の結果に対するTesseractの信頼度(0～100のスケール)
+* `bbox` - "bounding box"は、`x0`, `x1`, `y0`, `y1`を含むオブジェクトです。 `x0` は検出されたテキストの外枠を囲うボックスの左側のx座標を意味し、`x1`は右側のx座標を意味します。`y0`はy座標の下側、`y1`はy座標の上側を意味します。
 
-### `getOcrText` endpoint
+### `getOcrText` エンドポイント
 
-Sending a POST request to `/session/:sessionid/appium/ocr` will perform OCR on the current screenshot and respond with a JSON object containing three keys:
+POSTリクエストを `/session/:sessionid/appium/ocr` に送ると、現在のスクリーンショットに対してOCRが実行され、3つのキーを含むJSONオブジェクトで応答します。
 
-* `words` - Tesseract's guess at individual words
-* `lines` - Tesseract's guess at lines of text
-* `blocks` - Tesseract's guess at contiguous blocks of text
+* `words` - Tesseractが推測する個別の単語
+* `lines` - Tesseractが推測するテキスト文章
+* `blocks` - Tesseractが推測する連続したテキストブロック
 
-Each of these keys references an array of OCR objects, themselves containing 3 keys:
+これらのキーはそれぞれ、3つのキーを含むOCRオブジェクトの配列を参照します。
 
-* `text`: the text discovered
-* `confidence`: the confidence of the correctness of the resulting text
-* `bbox`: the bounding box of the discovered text (see above)
+* `text`: 発見されたテキスト
+* `confidence`: 検出されたテキストに対する信頼度
+* `bbox`: 検出されたテキストブロックの境界線（上記参照）
 
-### The `OCR` context
+### `OCR` コンテキスト
 
-With this plugin active, you will notice an extra context available in a call to `getContexts`: `OCR`. When you switch to the `OCR` context (via `driver.setContext('OCR')` or equivalent), certain commands will have new behaviours.
+このプラグインを有効にすると、`getContexts` を呼び出したときに、`OCR` という追加のコンテキストが利用できるようになります。OCR` コンテキストに切り替えると (`driver.setContext('OCR')` または同等の方法で)、特定のコマンドに新しい動作が追加されます。
+#### ページソースの入手
 
-#### Get Page Source
-
-When retrieving page source in the OCR context, the result will be an XML document with basically the same data as that returned by the `getOcrText` command. Here is an example:
+OCRコンテキストでページソースを取得する場合、基本、取得結果は `getOcrText` コマンドが返すものと同じ情報を持つXMLドキュメントになります。以下はその例です。
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -100,53 +111,58 @@ When retrieving page source in the OCR context, the result will be an XML docume
 </OCR>
 ```
 
-### Find Element(s)
+### エレメントの検出
 
-When in the OCR context, you have access to a single locator strategy: `xpath`. The value of your selector will form the basis of a query against the page source as retrieved and described in the previous section. Any matching elements will be returned to your client. These elements will not be standard UI elements (i.e., `XCUIElementTypeText` or `android.widget.TextView`). Instead they are a sort of "virtual" element that only allows the following methods:
+OCR コンテキストでは、`xpath` ロケーターを使用してXML内のエレメンを参照します。前述にある通り、セレクターの値にはページソース内のエレメントをクエリーする記述を設定します。一致する要素が見つかれば、該当エレメントがクライアントに返されます。これらの要素は、標準的なUI要素（つまり、 `XCUIElementTypeText` や `android.widget.TextView` ）ではなく、以下にあげる限定されたメソッドのみをサポートします。
 
-* `Click Element`: perform a single tap action at the center point of the bounding box for the selected element
-* `Is Element Displayed`: always returns `true`, since if the element weren't displayed, it wouldn't be amenable to OCR
-* `Get Element Size`: returns data from the bounding box in the appropriate format
-* `Get Element Location`: returns data from the bounding box in the appropriate format
-* `Get Element Rect`: returns data from the bounding box in the appropriate format
-* `Get Element Text`: returns the text discovered via the OCR (same text as in the page source output)
-* `Get Element Attribute`: only one attribute (`confidence`) can be retrieved, and it returns the confidence value
+* `Click Element`: 選択した要素のバウンディングボックスの中心点をシングルタップするアクションを実行します。
+* `Is Element Displayed`: 原則、常に `true` を返します。表示されていなければ、OCRとして検出されません。
+* `Get Element Size`: ボックスの高さと幅を返します。
+* `Get Element Location`: `x0` と `y0` が指すポイントを返します。
+* `Get Element Rect`: `x0`, `x1`, `y0`, `y1`の各数値を返します。
+* `Get Element Text`: OCRで検出されたテキスト（ページソース出力と同じテキスト）を返します。
+* `Get Element Attribute`: 属性の値を返します。現在、attribute (`confidence`) のみがサポートされます。
 
-As an example of how this might be used, assuming we're in the OCR context and that the page source matches the example above, we could do the following (in WebdriverIO; adjust as appropriate for other client libraries):
+Clickコマンドを使って一例を示します。まずOCR コンテキストへ移行してください。ページソースが上記の例と一致するのであれば、以下Javascriptの例となりますが、以下に従ってエレメントをクリックできます (WebdriverIOに従って、お使いのクライアントライブラリで動作するように変換してください)。
 
 ```js
 const element = await driver.$('//lines/item[text() = "Echo Box"]')
 await element.click()
 ```
+```Python
+element = driver.find_element(by=By.XPATH, value="//lines/item[contains(text(), 'Login Screen')]")
+element.click()
+```
 
-This clicks the center of the screen region where Tesseract has found the "Echo Box" text line to be located.
+上記コマンドは、Tesseractが "Echo Box"のテキストラインがあると判断した画面領域の中心をクリックするものです。
 
-### Settings
+### 設定
 
-Sometimes it will be necessary to tweak the operation of the plugin in various ways. These settings are available to you to do that. You can either set them as capabilities (e.g., `appium:settings[<settingName>] = <settingValue>`) or use your client library's settings update functionality (e.g., `driver.updateSettings(...)`).
+場合によっては、プラグインの動作にいろいろと手を加えることが必要になることがあります。その際に利用できるのが下の設定です。Capabilityとして設定するか（例：`appium:settings[<settingName>] = <settingValue>` ）、もしくは、クライアントライブラリの設定更新機能（例：`driver.updateSettings(...)` ）として設定できます。
 
 |Setting name|Description|Default|
 |------------|-----------|-------|
-|`ocrShotToScreenRatio`|(Number) Sometimes, the dimensions of the screenshot returned by a platform differ from the screen coordinates used by the platform. In this case, conversion is required so that returned locations match the actual screen locations, not the pixel locations of the screenshot image. The number her corresponds to the factor by which the screenshot has been enlarged relative to the screen coordinates.|`3.12` for iOS, `1.0` otherwise|
-|`ocrDownsampleFactor`|(Number) how much you would like to shrink the screenshot before performing OCR on it. The reason to do this would be to try to speed up the OCR algorithm. `1.0` means no shrinking, and `2.0` means shrinking by a factor of 2.|`3.12` for iOS, `null` otherwise|
-|`ocrInvertColors`|(Boolean) If you are dealing with a dark mode screen you may want to invert the colors as Tesseract mostly expects light background and dark text.|`false`|
-|`ocrContrast`|(Number) by default this plugin will attempt to increase the contrast in the image for a better OCR result. You can set this to a value between `-1.0` (maximum reduce contrast) and `1.0` (maximum increase contrast). `0.0` means to perform no contrast adjustment at all.|`0.5`|
-|`ocrLanguage`|(String) a `+`-separated list of language names for Tesseract to download training data for.|`'eng'`|
-|`ocrValidChars`|(String) a list of characters for Tesseract to consider during OCR; `''` means all characters. You can fill out your own list if you know you only expect certain characters, and it might improve accuracy and reliability.|`''`|
+|`ocrShotToScreenRatio`|(Number) プラットフォームから返されるスクリーンショットの寸法は、プラットフォームが使用する画面座標と異なる場合があります。この場合、スクリーンショット画像の画素位置ではなく、実際の画面位置と一致するように変換する必要があります。ここでの数値は、スクリーンショットがスクリーン座標に対して拡大された係数に相当します。|`3.12` for iOS, `1.0` otherwise|
+|`ocrDownsampleFactor`|(Number) OCR を実行する前に、スクリーンショットをどの程度縮小するかを設定します。これを行う理由は、OCR アルゴリズムを高速化するためです。1.0`は縮小しないことを意味し、`2.0`は2倍縮小することを意味します。|`3.12` for iOS, `null` otherwise|
+|`ocrInvertColors`|(Boolean) ダークモードの画面では、Tesseractは明るい背景と暗いテキストを想定しているので、色を反転させた方がよいでしょう。|`false`|
+|`ocrContrast`|(Number) デフォルトでは、このプラグインはより良いOCR結果を得るために、画像のコントラストを上げようとします。この値は `-1.0` (コントラストを最大に下げる) と `1.0` (コントラストを最大に上げる) の間で設定することができます。`0.0`は、コントラスト調整を全く行わないことを意味します。|`0.5`|
+|`ocrLanguage`|(String) Tesseract が学習データをダウンロードするための、 `+` 区切られた言語名のリスト。|`'eng'`|
+|`ocrValidChars`|(String) OCRの際にTesseractが考慮すべき文字のリスト。特定の文字しか期待できないとわかっている場合は、独自のリストを記入することができ、精度と信頼性が向上する可能性があります。|`''`|
 
 ## Development
 
 PRs welcomed!
 
-### Setup
+### セットアップ
 
 1. Clone repo
 2. `npm install`
 
 ### Run tests
 
-1. Link this repo into an Appium server (e.g., `appium plugin install --source=local $(pwd)` from this plugin development directory)
-2. Start the Appium server (e.g., `appium --use-plugins=ocr`)
-3. export the `TEST_APP_PATH` env var to a path to TheApp.app.zip
-4. `npm run test:unit`
-5. `npm run test:e2e`
+1. クローン先のプラグインをAppiumサーバーへインストールするのであれば、ルートフォルダーから `appium plugin install --source=local $(pwd)` を実行する。
+2. Appium サーバーを起動する (e.g., `appium --use-plugins=ocr`)
+3. `TEST_APP_PATH` 環境変数をエキスポートする。値には、TheApp.app.zip (https://github.com/cloudgrey-io/the-app/releases)の保存場所を保存する。
+4. Javascript の場合：`npm run test:unit`
+5. Javascript の場合：`npm run test:e2e`
+6. Pythonの場合：`python appium_ocr_plugin_test.py`
