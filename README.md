@@ -4,9 +4,9 @@
 
 ## 機能
 
-1. **New OCR endpoint** - call a new Appium server endpoint to perform OCR on the current screenshot, and return matching text and metadata.
-2. **OCR context** - switch to the `OCR` context and the page source will be updated to respond with XML corresponding to text objects found on the screen.
-3. **Find elements by OCR text** - When in the OCR context, using XPath will find "elements" based on the OCR XML version of the page source. These found elements can then be interacted with in minimal ways (click, getText) based purely on screen position.
+1. **OCR専用のエンドポイント** - 現在のスクリーンショットに対してOCRを走査させることで、画面上に検出したテキストとメタデータを返すことができます。これに必要となる新しいエンドポイントが、Appiumサーバーへ追加されました。
+2. **OCRコンテキスト** - `OCR` コンテキストに切り替えることで、ページソースとして特別なXMLファイルが返されます。このXMLには画面上で見つかったテキストオブジェクトへのパスが含まれます。
+3. **OCRテキストによるエレメントの検出** - OCR コンテキストでは、XML形式のページソース内に記述されるエレメントへのXPathによるアクセスを可能にします。これらの見つかったエレメントに対しては、クリックやテキストの取得など最小限のメソッドを実施することができます。
 
 ## 事前準備
 
