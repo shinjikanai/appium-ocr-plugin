@@ -11,6 +11,8 @@
 ## 事前準備
 
 * Appium Server 2.0+
+Appium 2.0 のインストール方法： `npm install -g appium@next`
+https://www.headspin.io/blog/installing-appium-2-0-and-the-driver-and-plugins-cli
 
 ## インストレーション - サーバー側
 
